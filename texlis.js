@@ -58,6 +58,36 @@ let Texlis = function(element, callback) {
     144,  // NumLock
     145  // ScrollLock
   ];
+  this.clearIgnoreKey = function() { this.ignoreKeyCode = []; };
+  this.addIgnoreKey = function(keyCode) { this.ignoreKeyCode.unshift(keyCode); };
+  this.removeIgnoreKey = function(keyCode) {
+    let index = this.ignoreKeyCode.indexOf(keyCode);
+    if (index >= 0) {
+      this.ignoreKeyCode.splice(index, 1);
+    }
+  };
+/* TODO: implement
+  this.ignore = (function(texlis) {
+    this.keyCode = [
+    ];
+    this.clear = function() {
+      this.keyCode = [];
+    };
+    this.add = function(keyCode) {
+      if (this.keyCode.indexOf(keyCode) < 0) {
+        this.keyCode.unshift(keyCode);
+      }
+    };
+    this.remove = function(keyCode) {
+      let index = this.keyCode.indexOf(keyCode);
+      if (index >= 0) {
+        this.keyCode.splice(index, 1);
+      }
+    };
+    return this;
+  })(this);
+*/
+
   this.keyStack = [];
   this.isKeypressInvoked = false;
   this.isImeMode = false;
