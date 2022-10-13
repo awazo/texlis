@@ -61,7 +61,7 @@ let Texlis = function(element, callback) {
   this.keyStack = [];
   this.isKeypressInvoked = false;
   this.isImeMode = false;
-  this.keyupWaitMilliseconds = 10;
+  this.keyupWaitMillisec = 10;
   this.keyupWaitTimerId = null;
 
   let texlis = this;
@@ -91,7 +91,7 @@ let Texlis = function(element, callback) {
           } else if (event.keyCode === 229) {
             texlis.keyupWaitTimerId = setTimeout(function() {
               texlis.callback(event);
-            }, texlis.keyupWaitMilliseconds);
+            }, texlis.keyupWaitMillisec);
           } else {
             if (texlis.keyupWaitTimerId != null) {
               clearTimeout(texlis.keyupWaitTimerId);
