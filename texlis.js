@@ -68,19 +68,15 @@ let Texlis = function(element, callback) {
   this.element.addEventListener('keydown', function(event) {
     texlis.isKeypressInvoked = false;
     texlis.isImeMode = (event.keyCode === 229);
-    if (!texlis.isImeMode) {
+    if ((event.keyCode !== 9 /*tab*/) && !texlis.isImeMode) {
       texlis.keyStack.unshift(event.keyCode);
     }
   });
   this.element.addEventListener('keypress', function(event) {
     texlis.isKeypressInvoked = true;
-    if (texlis.ignoreKeyCode.includes(event.keyCode)) {
-      return;
-    }
-    texlis.callback(event);
   });
   this.element.addEventListener('keyup', function(event) {
-    if (texlis.isKeypressInvoked) {
+    if ((event.keyCode === 9 /*tab*/) || texlis.isKeypressInvoked) {
       if (!texlis.ignoreKeyCode.includes(event.keyCode)) {
         texlis.callback(event);
       }
