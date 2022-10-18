@@ -17,13 +17,124 @@ ime ON
         other: keyup = 229 and the key
 */
 
-let Texlis = function(element, callback) {
+let texlis = {};
+
+texlis.KeyBucket = function(texlis) {
+  this.key = {}
+  this.clear = function() {
+    this.key = {}
+  };
+  this.containsKeyName = function(keyName) {
+    return this.key.keys().includes(keyName);
+  };
+  this.contains = function(keyCode) {
+    return this.key.values().includes(keyCode);
+  };
+  this.add = function(keyName, keyCode) {
+    if (!this.contains(keyCode)) {
+      this.key[keyName] = keyCode;
+    }
+  };
+  this.removeByKeyName = function(keyName) {
+    delete this.key[keyName];
+  };
+  this.remove = function(keyCode) {
+    let keyName = this.getKeyName(keyCode);
+    if (keyName != null) {
+      delete this.key[keyName];
+    }
+  };
+  this.getKeyName = function(keyCode) {
+    let pair = this.key.entries().find(function(elm, idx, arr) {
+      return (elm[1] === keyCode);
+    });
+    return (pair && pair[0]);
+  };
+  this.getKeyCode = function(keyName) {
+    return this.key[keyName];
+  };
+
+  this.equalsKeySet = function(keySet1, keySet2) {
+    return ((keySet1.length === keySet2.length)
+      && keySet1.every(function(elm, idx, arr) {
+        return keySet2.includes(elm);
+      }));
+  };
+
+  this.excludeKey = {}
+  this.clearExclude = function() {
+    this.excludeKey = {}
+  };
+  this.containsExcludeKeyName = function(keyName) {
+    return this.excludeKey.keys().includes(keyName);
+  };
+  this.containsExclude = function(keySet) {
+    return this.excludeKey.values().some(function(elm, idx, arr) {
+      return this.equalsKeySet(keySet, elm);
+    });
+  };
+  this.addExclude = function(keyName, keySet) {
+    if (!this.containsExclude(keySet)) {
+      this.excludeKey[keyName] = (Array.isArray(keySet)? keySet: [ keySet ]);
+    }
+  };
+  this.removeExcludeByKeyName = function(keyName) {
+    delete this.excludeKey[keyName];
+  };
+  this.removeExclude = function(keySet) {
+    let keyName = this.getExcludeKeyName(keySet);
+    if (keyName != null) {
+      delete this.excludeKey[keyName];
+    }
+  };
+  this.getExcludeKeyName = function(keySet) {
+    let pair = this.excludeKey.entries().find(function(elm, idx, arr) {
+      return this.equalsKeySet(keySet, elm[1]);
+    });
+    return (pair && pair[0]);
+  };
+  this.getExcludeKeySet = function(keyName) {
+    return this.excludeKey[keyName];
+  };
+
+  this.initialize = function(key, excludeKey) {
+    if ((key != null) && (typeof key === 'object')) {
+      this.key = key;
+    }
+    if ((excludeKey != null) && (typeof excludeKey === 'object')) {
+      this.excludeKey = excludeKey;
+    }
+  };
+  this.inKeyName = function(keyName) {
+    return (this.containsKeyName(keyName)
+      && !this.containsExcludeKeyName(keyName));
+  };
+  this.in = function(keyCode, keySet) {
+    if (keySet == null) {
+      return (this.contains(keyCode)
+        && !this.containsExclude([ keyCode ]));
+    } else {
+      if (!keySet.includes(keyCode)) {
+        keySet = Array.from(keySet);
+        keySet.push(keyCode);
+      }
+      return (this.contains(keyCode)
+        && !this.containsExclude(keySet));
+    }
+  };
+};
+
+texlis.Texlis = function(element, callback, options) {
   if (element == null) throw 'invalid element';
   if ((callback == null) || (typeof callback !== 'function'))
     callback = function(event) {};
+  if (options == null) options = {};
 
   this.element = element;
   this.callback = callback;
+  this.options = options;
+
+  // TODO: implement: this.ignore = new texlis.KeyBucket();
 
   this.ignoreKeyCode = [
     9,  // Tab
@@ -66,27 +177,6 @@ let Texlis = function(element, callback) {
       this.ignoreKeyCode.splice(index, 1);
     }
   };
-/* TODO: implement
-  this.ignore = (function(texlis) {
-    this.keyCode = [
-    ];
-    this.clear = function() {
-      this.keyCode = [];
-    };
-    this.add = function(keyCode) {
-      if (this.keyCode.indexOf(keyCode) < 0) {
-        this.keyCode.unshift(keyCode);
-      }
-    };
-    this.remove = function(keyCode) {
-      let index = this.keyCode.indexOf(keyCode);
-      if (index >= 0) {
-        this.keyCode.splice(index, 1);
-      }
-    };
-    return this;
-  })(this);
-*/
 
   this.keyStack = [];
   this.isKeypressInvoked = false;
@@ -94,48 +184,58 @@ let Texlis = function(element, callback) {
   this.keyupWaitMillisec = 10;
   this.keyupWaitTimerId = null;
 
-  let texlis = this;
+  let that = this;
+  this.element.addEventListener('focus', function(event) {
+    that.keyStack = [];
+    that.isKeypressInvoked = false;
+    that.isImeMode = false;
+  });
+  this.element.addEventListener('blur', function(event) {
+    that.keyStack = [];
+    that.isKeypressInvoked = false;
+    that.isImeMode = false;
+  });
   this.element.addEventListener('keydown', function(event) {
-    texlis.isKeypressInvoked = false;
-    texlis.isImeMode = (event.keyCode === 229);
-    if ((event.keyCode !== 9 /*tab*/) && !texlis.isImeMode) {
-      texlis.keyStack.unshift(event.keyCode);
+    that.isKeypressInvoked = false;
+    that.isImeMode = (event.keyCode === 229);
+    if (!that.isImeMode) {
+      that.keyStack.unshift(event.keyCode);
     }
   });
   this.element.addEventListener('keypress', function(event) {
-    texlis.isKeypressInvoked = true;
+    that.isKeypressInvoked = true;
   });
   this.element.addEventListener('keyup', function(event) {
-    if ((event.keyCode === 9 /*tab*/) || texlis.isKeypressInvoked) {
-      if (!texlis.ignoreKeyCode.includes(event.keyCode)) {
-        texlis.callback(event);
+    if (that.isKeypressInvoked) {
+      if (!that.ignoreKeyCode.includes(event.keyCode)) {
+        that.callback(event);
       }
     } else {
-      let withIgnoreKey = texlis.keyStack.some(function(elm, idx, arr) {
-        return texlis.ignoreKeyCode.includes(elm);
+      let withIgnoreKey = that.keyStack.some(function(elm, idx, arr) {
+        return that.ignoreKeyCode.includes(elm);
       });
       if (!withIgnoreKey) {
-        if (texlis.isImeMode) {
+        if (that.isImeMode) {
           if (event.keyCode === 13) {
-            texlis.callback(event);
+            that.callback(event);
           } else if (event.keyCode === 229) {
-            texlis.keyupWaitTimerId = setTimeout(function() {
-              texlis.callback(event);
-            }, texlis.keyupWaitMillisec);
+            that.keyupWaitTimerId = setTimeout(function() {
+              that.callback(event);
+            }, that.keyupWaitMillisec);
           } else {
-            if (texlis.keyupWaitTimerId != null) {
-              clearTimeout(texlis.keyupWaitTimerId);
-              texlis.keyupWaitTimerId = null;
+            if (that.keyupWaitTimerId != null) {
+              clearTimeout(that.keyupWaitTimerId);
+              that.keyupWaitTimerId = null;
             }
           }
         } else {
-          texlis.callback(event);
+          that.callback(event);
         }
       }
     }
-    let index = texlis.keyStack.indexOf(event.keyCode);
+    let index = that.keyStack.indexOf(event.keyCode);
     if (index >= 0) {
-      texlis.keyStack.splice(index, 1);
+      that.keyStack.splice(index, 1);
     }
   });
 };
