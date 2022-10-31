@@ -1,3 +1,6 @@
+ah... it's not need, maybe... just use input event alternatively...???
+I'll test it for a few days...
+
 # texlis.js
 text input listener: a javascript library for apps along with text input
 
