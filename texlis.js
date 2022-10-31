@@ -134,7 +134,19 @@ texlis.Texlis = function(element, callback, options) {
   this.callback = callback;
   this.options = options;
 
-  // TODO: implement: this.ignore = new texlis.KeyBucket();
+  this.ignore = new texlis.KeyBucket();
+  this.ignore.initialize({
+    'Tab': 9, 'Enter': 13, 'Shift': 16, 'Ctrl': 17,
+    'Alt': 18, 'Pause/Break': 19, 'CapsLock': 20, 'Esc': 27,
+    'PageUp': 33, 'PageDown': 34, 'End': 35, 'Home': 36,
+    'left arrow': 37, 'up arrow': 38, 'right arrow': 39, 'down arrow': 40,
+    'Insert': 45, 'F1': 112, 'F2': 113, 'F3': 114,
+    'F4': 115, 'F5': 116, 'F6': 117, 'F7': 118,
+    'F8': 119, 'F9': 120, 'F10': 121, 'F11': 122,
+    'F12': 123, 'NumLock': 144, 'ScrollLock': 145
+  }, {
+    'paste': [ 17, 'v' ]  // TODO: fixme: 'v' to code
+  });
 
   this.ignoreKeyCode = [
     9,  // Tab
